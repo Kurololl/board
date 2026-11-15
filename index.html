@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Board</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="stage">
+  <div id="world"></div>
+  <canvas id="canvas"></canvas>
+  <div id="cursors"></div>
+</div>
+
+<div id="status">
+  <span class="dot"></span>
+  <span id="statusText">Connecting…</span>
+  <input id="name" maxlength="24" spellcheck="false" title="Your name">
+  <button id="newBoard" title="New board">＋</button>
+</div>
+
+<div id="toolbar">
+  <button data-tool="select" title="Select and move (V)">✋</button>
+  <button data-tool="pen" title="Pen (P)">✏️</button>
+  <button data-tool="eraser" title="Eraser (E)">🧽</button>
+  <span class="sep"></span>
+  <input type="color" id="color" value="#222222" title="Color">
+  <input type="range" id="width" min="1" max="40" value="4" title="Brush size">
+  <span class="sep"></span>
+  <button id="addNote" title="Add note (N)">📝</button>
+  <button id="addImage" title="Add image (I)">🖼️</button>
+  <span class="sep"></span>
+  <button id="undo" title="Undo (Ctrl+Z)">↩️</button>
+  <button id="share" title="Copy board link">🔗</button>
+  <input type="file" id="fileInput" accept="image/*" multiple hidden>
+</div>
+
+<div id="toast"></div>
+<div id="dropHint">Drop images here</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
