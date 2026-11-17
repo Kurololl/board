@@ -10,31 +10,49 @@
 <div id="stage">
   <div id="world"></div>
   <canvas id="canvas"></canvas>
-  <div id="cursors"></div>
 </div>
+
+<nav id="crumbs"></nav>
 
 <div id="status">
   <span class="dot"></span>
-  <span id="statusText">Connecting…</span>
-  <input id="name" maxlength="24" spellcheck="false" title="Your name">
-  <button id="newBoard" title="New board">＋</button>
+  <span id="statusText">Loading…</span>
+  <button id="openSettings" title="GitHub settings">⚙️</button>
 </div>
 
 <div id="toolbar">
   <button data-tool="select" title="Select and move (V)">✋</button>
-  <button data-tool="pen" title="Pen (P)">✏️</button>
-  <button data-tool="eraser" title="Eraser (E)">🧽</button>
-  <span class="sep"></span>
-  <input type="color" id="color" value="#222222" title="Color">
-  <input type="range" id="width" min="1" max="40" value="4" title="Brush size">
-  <span class="sep"></span>
-  <button id="addNote" title="Add note (N)">📝</button>
-  <button id="addImage" title="Add image (I)">🖼️</button>
-  <span class="sep"></span>
-  <button id="undo" title="Undo (Ctrl+Z)">↩️</button>
-  <button id="share" title="Copy board link">🔗</button>
+  <button data-tool="pen" class="edit-only" title="Pen (P)">✏️</button>
+  <button data-tool="eraser" class="edit-only" title="Eraser (E)">🧽</button>
+  <span class="sep edit-only"></span>
+  <input type="color" id="color" class="edit-only" value="#222222" title="Color">
+  <input type="range" id="width" class="edit-only" min="1" max="40" value="4" title="Brush size">
+  <span class="sep edit-only"></span>
+  <button id="addNote" class="edit-only" title="Add note (N)">📝</button>
+  <button id="addFolder" class="edit-only" title="Add folder (F)">📁</button>
+  <button id="addImage" class="edit-only" title="Add image (I)">🖼️</button>
+  <span class="sep edit-only"></span>
+  <button id="undo" class="edit-only" title="Undo (Ctrl+Z)">↩️</button>
+  <button id="share" title="Copy link to this board">🔗</button>
   <input type="file" id="fileInput" accept="image/*" multiple hidden>
 </div>
+
+<dialog id="settings">
+  <form method="dialog">
+    <h3>GitHub storage</h3>
+    <label>Owner<input name="owner" autocomplete="off" spellcheck="false"></label>
+    <label>Repository<input name="repo" autocomplete="off" spellcheck="false"></label>
+    <label>Data branch<input name="branch" autocomplete="off" spellcheck="false"></label>
+    <label>Access token<input name="token" type="password" autocomplete="off" placeholder="github_pat_…"></label>
+    <p class="hint">Use a fine-grained token with access to this repository only and the permission "Contents: Read and write". It is stored in this browser only. Without a token the board is read-only.</p>
+    <div class="row">
+      <button value="disconnect" class="ghost">Disconnect</button>
+      <span></span>
+      <button value="cancel">Cancel</button>
+      <button value="save" class="primary">Save</button>
+    </div>
+  </form>
+</dialog>
 
 <div id="toast"></div>
 <div id="dropHint">Drop images here</div>
