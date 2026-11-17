@@ -1,7 +1,9 @@
 {
   "version": 1,
   "id": "main",
-  "items": {},
+  "items": {
+    "25b7318b-8787-46f2-ab08-5c1d5c5284bb": {"id":"25b7318b-8787-46f2-ab08-5c1d5c5284bb","type":"folder","x":-25.5,"y":-168.2,"w":172.1,"h":129.1,"text":"zqwf","child":"95d96d8e53c4","color":"#15aabf"}
+  },
   "links": {},
   "strokes": {}
 }
