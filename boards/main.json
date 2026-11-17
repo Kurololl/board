@@ -2,8 +2,11 @@
   "version": 1,
   "id": "main",
   "items": {
-    "7c4c4cec-05fb-4d92-9ba1-b61b4556ca0e": {"id":"7c4c4cec-05fb-4d92-9ba1-b61b4556ca0e","type":"note","x":-347.7,"y":-328.8,"w":255.6,"h":185.9,"text":"","color":"#fff3a3"}
+    "7c4c4cec-05fb-4d92-9ba1-b61b4556ca0e": {"id":"7c4c4cec-05fb-4d92-9ba1-b61b4556ca0e","type":"note","x":-347.7,"y":-328.8,"w":255.6,"h":185.9,"text":"","color":"#fff3a3"},
+    "850107ba-a721-4f7d-8636-16754203060b": {"id":"850107ba-a721-4f7d-8636-16754203060b","type":"note","x":23.6,"y":-399.3,"w":189.4,"h":137.7,"text":""}
   },
-  "links": {},
+  "links": {
+    "418f2e05-3128-4cef-a8dd-7d243ec347d7": {"id":"418f2e05-3128-4cef-a8dd-7d243ec347d7","from":"850107ba-a721-4f7d-8636-16754203060b","to":"7c4c4cec-05fb-4d92-9ba1-b61b4556ca0e","color":"#e03131"}
+  },
   "strokes": {}
 }
