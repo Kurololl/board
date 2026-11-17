@@ -1,9 +1,7 @@
 {
   "version": 1,
   "id": "main",
-  "items": {
-    "7adf22d6-2fe1-4e16-a770-567b6fdeea82": {"id":"7adf22d6-2fe1-4e16-a770-567b6fdeea82","type":"note","x":-119.9,"y":-133.5,"w":189.4,"h":137.7,"text":""}
-  },
+  "items": {},
   "links": {},
   "strokes": {}
 }
