@@ -10,6 +10,22 @@
 <div id="stage">
   <div id="world"></div>
   <canvas id="canvas"></canvas>
+  <svg id="links" width="1" height="1"></svg>
+  <div id="cursors"></div>
+</div>
+
+<div id="pinbar" hidden>
+  <div id="pbSwatches" data-k="note folder link"></div>
+  <input type="color" id="pbCustom" data-k="note folder link" title="Custom color">
+  <span class="sep" data-k="note folder"></span>
+  <button id="pbSmaller" data-k="note folder image" title="Smaller text">A−</button>
+  <span id="pbSize" data-k="note folder image"></span>
+  <button id="pbBigger" data-k="note folder image" title="Bigger text">A+</button>
+  <button id="pbBold" data-k="note folder image" title="Bold (Ctrl+B)"><b>B</b></button>
+  <label class="pb-textcolor" data-k="note folder image" title="Text color">A<input type="color" id="pbTextColor"></label>
+  <span class="sep" data-k="note folder image"></span>
+  <button id="pbConnect" data-k="note folder image" title="Connect to another pin">🧵</button>
+  <button id="pbDelete" title="Delete (Del)">🗑️</button>
 </div>
 
 <nav id="crumbs"></nav>
@@ -17,13 +33,15 @@
 <div id="status">
   <span class="dot"></span>
   <span id="statusText">Loading…</span>
-  <button id="openSettings" title="GitHub settings">⚙️</button>
+  <input id="name" class="live-only" maxlength="24" spellcheck="false" title="Your name shown to others">
+  <button id="openSettings" class="not-live" title="GitHub settings">⚙️</button>
 </div>
 
 <div id="toolbar">
   <button data-tool="select" title="Select and move (V)">✋</button>
   <button data-tool="pen" class="edit-only" title="Pen (P)">✏️</button>
   <button data-tool="eraser" class="edit-only" title="Eraser (E)">🧽</button>
+  <button data-tool="connect" class="edit-only" title="Connect pins: drag from one pin to another (C)">🧵</button>
   <span class="sep edit-only"></span>
   <input type="color" id="color" class="edit-only" value="#222222" title="Color">
   <input type="range" id="width" class="edit-only" min="1" max="40" value="4" title="Brush size">

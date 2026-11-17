@@ -56,7 +56,7 @@ body.tool-eraser #stage {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 6px 18px rgba(0, 0, 0, 0.08);
 }
 
-body:not(.tool-select) .pin { pointer-events: none; }
+body.tool-pen .pin, body.tool-eraser .pin { pointer-events: none; }
 
 .pin.dragging { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15), 0 16px 36px rgba(0, 0, 0, 0.16); }
 
@@ -432,3 +432,163 @@ body.readonly .pin-bar, body.readonly .pin img { cursor: default; }
 
 #settings button.primary { background: #3b5bdb; color: #fff; }
 #settings button.ghost { background: transparent; color: #c92a2a; padding-left: 0; }
+
+#links {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+
+.link-line, .link-temp {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25));
+}
+
+.link-temp { stroke-dasharray: 6 6; opacity: 0.8; }
+
+.link-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 16;
+  vector-effect: non-scaling-stroke;
+  pointer-events: stroke;
+  cursor: pointer;
+}
+
+body:not(.tool-select) .link-hit, body.readonly .link-hit { pointer-events: none; }
+
+.link.selected .link-line { stroke-width: 5; }
+
+.link-pin {
+  stroke: rgba(0, 0, 0, 0.35);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.pin.selected { outline: 2px solid #3b5bdb; outline-offset: 3px; }
+.pin.connect-target { outline: 3px dashed #e03131; outline-offset: 4px; }
+body.tool-connect .pin, body.tool-connect .pin * { cursor: crosshair !important; }
+body.connecting .pin, body.connecting .pin * { cursor: copy !important; }
+
+#pinbar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 5px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1), 0 10px 30px rgba(0, 0, 0, 0.14);
+  user-select: none;
+}
+
+#pinbar[hidden], #pinbar [hidden] { display: none !important; }
+
+#pbSwatches { display: flex; gap: 3px; }
+
+.swatch {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.swatch.active { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #3b5bdb; }
+
+#pinbar button:not(.swatch) {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+#pinbar button:not(.swatch):hover { background: #f0efeb; }
+#pinbar button.active { background: #dfe6ff; }
+
+#pbCustom {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+#pbSize { min-width: 20px; text-align: center; font-size: 12px; color: #777; }
+
+.pb-textcolor {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  font-weight: 700;
+  text-decoration: underline 3px;
+  cursor: pointer;
+}
+
+.pb-textcolor:hover { background: #f0efeb; }
+
+.pb-textcolor input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+#cursors {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.cursor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+}
+
+.cursor svg { display: block; }
+
+.cursor span {
+  position: absolute;
+  left: 14px;
+  top: 16px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+body:not(.live) .live-only, body.live .not-live { display: none !important; }
+
+#name {
+  width: 110px;
+  padding: 3px 6px;
+  border: 1px solid #e5e3de;
+  border-radius: 6px;
+  font: inherit;
+}
+
+body.live #status { padding-right: 6px; }

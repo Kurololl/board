@@ -1,6 +1,12 @@
+const SUPABASE_URL = "";
+const SUPABASE_KEY = "";
+
 const ROOT_ID = "main";
 const DEFAULT_BRANCH = "board-data";
 const AUTOSAVE_DELAY = 2500;
+const LIVE_SAVE_DELAY = 500;
+const LIVE_SEND_INTERVAL = 70;
+const CURSOR_COLORS = ["#e8590c", "#d6336c", "#ae3ec9", "#7048e8", "#1c7ed6", "#0c8599", "#2b8a3e", "#f08c00"];
 const POLL_WITH_TOKEN = 15000;
 const POLL_WITHOUT_TOKEN = 60000;
 const MAX_IMAGE_SIDE = 1600;
@@ -8,6 +14,10 @@ const CAPTION = 30;
 const MIN_ZOOM = 0.05;
 const MAX_ZOOM = 8;
 const FOLDER_COLORS = ["#4c6ef5", "#12b886", "#fab005", "#fa5252", "#be4bdb", "#15aabf", "#fd7e14", "#82c91e"];
+const NOTE_COLORS = ["#fff3a3", "#ffd8a8", "#ffc9de", "#e5d4ff", "#c5dcff", "#c3f0c8", "#ffffff", "#e9ecef"];
+const LINK_COLORS = ["#e03131", "#1971c2", "#2f9e44", "#f08c00", "#9c36b5", "#212529", "#868e96"];
+const FONT_SIZES = [10, 12, 14, 15, 16, 18, 22, 28, 36, 48, 64, 80];
+const DEFAULT_FONT = { note: 15, folder: 16, image: 13 };
 
 const $ = s => document.querySelector(s);
 const stage = $("#stage");
@@ -22,6 +32,13 @@ const crumbsEl = $("#crumbs");
 const statusDot = $("#status .dot");
 const statusText = $("#statusText");
 const settingsDlg = $("#settings");
+const linksSvg = $("#links");
+const pinbar = $("#pinbar");
+const cursorsEl = $("#cursors");
+const nameInput = $("#name");
+const pbSwatches = $("#pbSwatches");
+const pbCustom = $("#pbCustom");
+const pbTextColor = $("#pbTextColor");
 
 const newId = () => crypto.randomUUID
   ? crypto.randomUUID()
@@ -29,7 +46,8 @@ const newId = () => crypto.randomUUID
 const newBoardId = () => newId().replace(/-/g, "").slice(0, 12);
 const r = v => Math.round(v * 10) / 10;
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
-const safeColor = c => /^#[0-9a-f]{6}$/i.test(c) ? c : FOLDER_COLORS[0];
+const safeHex = (c, f) => /^#[0-9a-f]{6}$/i.test(c || "") ? c : f;
+const safeColor = c => safeHex(c, FOLDER_COLORS[0]);
 const boardPath = id => `boards/${id}.json`;
 const ls = {
   get: k => { try { return localStorage.getItem(k); } catch { return null; } },
@@ -57,11 +75,11 @@ function serialize(doc) {
     const lines = Object.entries(m).map(([k, v]) => "    " + JSON.stringify(k) + ": " + JSON.stringify(v));
     return lines.length ? "{\n" + lines.join(",\n") + "\n  }" : "{}";
   };
-  return `{\n  "version": 1,\n  "id": ${JSON.stringify(doc.id)},\n  "items": ${block(doc.items)},\n  "strokes": ${block(doc.strokes)}\n}\n`;
+  return `{\n  "version": 1,\n  "id": ${JSON.stringify(doc.id)},\n  "items": ${block(doc.items)},\n  "links": ${block(doc.links)},\n  "strokes": ${block(doc.strokes)}\n}\n`;
 }
 
 function normalizeDoc(data, id = boardId) {
-  return { version: 1, id, items: { ...(data?.items || {}) }, strokes: { ...(data?.strokes || {}) } };
+  return { version: 1, id, items: { ...(data?.items || {}) }, links: { ...(data?.links || {}) }, strokes: { ...(data?.strokes || {}) } };
 }
 
 function mergeMap(base, local, remote) {
@@ -75,7 +93,13 @@ function mergeMap(base, local, remote) {
 }
 
 function mergeDocs(base, local, remote) {
-  return { version: 1, id: remote.id, items: mergeMap(base.items, local.items, remote.items), strokes: mergeMap(base.strokes, local.strokes, remote.strokes) };
+  return {
+    version: 1,
+    id: remote.id,
+    items: mergeMap(base.items, local.items, remote.items),
+    links: mergeMap(base.links, local.links, remote.links),
+    strokes: mergeMap(base.strokes, local.strokes, remote.strokes),
+  };
 }
 
 function detectRepo() {
@@ -198,15 +222,83 @@ function createLocalStore() {
   };
 }
 
+function createSupabaseStore(createClient) {
+  const sb = createClient(SUPABASE_URL, SUPABASE_KEY, { realtime: { params: { eventsPerSecond: 40 } } });
+  const idOf = path => path.replace(/^boards\//, "").replace(/\.json$/, "");
+  const conflict = () => Object.assign(new Error("Conflict"), { conflict: true });
+  let channel = null;
+  let listener = null;
+  return {
+    mode: "live",
+    canWrite: true,
+    label: "Supabase",
+    async init() {},
+    async read(path) {
+      const { data, error } = await sb.from("boards").select("data, version").eq("id", idOf(path)).maybeSingle();
+      if (error) throw error;
+      return data ? { data: data.data, sha: data.version } : { data: null, sha: null };
+    },
+    async write(path, doc, sha) {
+      const id = idOf(path);
+      const payload = JSON.parse(serialize(doc));
+      if (!sha) {
+        const { error } = await sb.from("boards").insert({ id, data: payload, version: 1 });
+        if (error) throw error.code === "23505" ? conflict() : error;
+        return 1;
+      }
+      const { data, error } = await sb.from("boards")
+        .update({ data: payload, version: sha + 1, updated_at: new Date().toISOString() })
+        .eq("id", id)
+        .eq("version", sha)
+        .select("version");
+      if (error) throw error;
+      if (!data.length) throw conflict();
+      return sha + 1;
+    },
+    async uploadImage(blob, ext) {
+      const path = `${newId()}.${ext}`;
+      const { error } = await sb.storage.from("images").upload(path, blob, { contentType: blob.type, cacheControl: "31536000" });
+      if (error) throw error;
+      return sb.storage.from("images").getPublicUrl(path).data.publicUrl;
+    },
+    imageUrl: p => p,
+    onChange(fn) { listener = fn; },
+    watch(id, h) {
+      if (channel) sb.removeChannel(channel);
+      const ch = sb.channel("board:" + id, { config: { broadcast: { self: false }, presence: { key: uid } } });
+      channel = ch;
+      ch.on("postgres_changes", { event: "*", schema: "public", table: "boards", filter: `id=eq.${id}` }, () => listener?.(boardPath(id)))
+        .on("broadcast", { event: "cursor" }, ({ payload }) => h.cursor(payload))
+        .on("broadcast", { event: "pin" }, ({ payload }) => h.pin(payload))
+        .on("presence", { event: "sync" }, () => h.presence(Object.keys(ch.presenceState()).length))
+        .on("presence", { event: "leave" }, ({ key }) => h.leave(key))
+        .subscribe(async status => {
+          if (ch !== channel) return;
+          h.status(status);
+          if (status === "SUBSCRIBED") await ch.track({ t: Date.now() });
+        });
+      return (event, payload) => {
+        if (ch === channel && ch.state === "joined") ch.send({ type: "broadcast", event, payload });
+      };
+    },
+  };
+}
+
 const blobCache = new Map();
 const docCache = new Map();
 const config = loadConfig();
-const repo = config.owner && config.repo ? createGitHubStore(config) : createLocalStore();
+const uid = newId();
+const me = {
+  name: ls.get("board-name") || "Guest " + uid.slice(0, 4),
+  color: CURSOR_COLORS[Math.floor(Math.random() * CURSOR_COLORS.length)],
+};
+let repo = { mode: "loading", canWrite: false, label: "", onChange() {}, imageUrl: p => p };
 
 const cam = { x: 0, y: 0, zoom: 1 };
 const strokes = new Map();
 const pins = new Map();
 const pinEls = new Map();
+const links = new Map();
 const pointers = new Map();
 const undoStack = [];
 
@@ -232,6 +324,20 @@ let zTop = 1;
 let lastPointer = { x: innerWidth / 2, y: innerHeight / 2 };
 let camSaveTimer = 0;
 let toastTimer = 0;
+let selected = null;
+let linksDirty = false;
+let barDirty = false;
+let connectDrag = null;
+let pendingConnect = null;
+let pullAfterSave = false;
+let sendLive = () => {};
+let liveState = "CONNECTING";
+let usersOnline = 1;
+let cursorTimer = 0;
+const remoteCursors = new Map();
+const cursorEls = new Map();
+const pinLiveTimers = new Map();
+let linkColor = safeHex(ls.get("board-link-color"), LINK_COLORS[0]);
 
 const hasUnsaved = () => changeSeq !== savedSeq;
 const canEdit = () => repo.canWrite && loaded;
@@ -247,7 +353,9 @@ function snapshot() {
   for (const p of pins.values()) items[p.id] = pinData(p);
   const st = {};
   for (const s of strokes.values()) st[s.id] = strokeData(s);
-  return { version: 1, id: boardId, items, strokes: st };
+  const ln = {};
+  for (const l of links.values()) ln[l.id] = { id: l.id, from: l.from, to: l.to, color: l.color };
+  return { version: 1, id: boardId, items, links: ln, strokes: st };
 }
 
 function applyDoc(doc) {
@@ -262,14 +370,23 @@ function applyDoc(doc) {
   }
   strokes.clear();
   for (const [k, v] of next) strokes.set(k, v);
+  links.clear();
+  for (const l of Object.values(doc.links)) if (l && l.id && l.from && l.to) links.set(l.id, { ...l });
+  if (selected?.kind === "link" && !links.has(selected.id)) select(null);
   dirty = true;
+  linksDirty = true;
+  barDirty = true;
 }
 
 function markChanged() {
   changeSeq++;
   updateStatus();
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(save, AUTOSAVE_DELAY);
+  saveTimer = setTimeout(save, saveDelay());
+}
+
+function saveDelay() {
+  return repo.mode === "live" ? LIVE_SAVE_DELAY : AUTOSAVE_DELAY;
 }
 
 function save() {
@@ -303,7 +420,11 @@ function save() {
       saving = false;
       savePromise = null;
       updateStatus();
-      if (hasUnsaved() && !lastError) saveTimer = setTimeout(save, AUTOSAVE_DELAY);
+      if (hasUnsaved() && !lastError) saveTimer = setTimeout(save, saveDelay());
+      if (pullAfterSave) {
+        pullAfterSave = false;
+        pull().catch(console.error);
+      }
     }
   })();
   return savePromise;
@@ -416,7 +537,15 @@ async function openBoard() {
   pins.clear();
   pinEls.clear();
   strokes.clear();
+  links.clear();
+  selected = null;
+  pendingConnect = null;
+  connectDrag = null;
+  linksDirty = true;
+  barDirty = true;
   undoStack.length = 0;
+  for (const id of [...remoteCursors.keys()]) removeCursor(id);
+  sendLive = () => {};
   current = null;
   gesture = null;
   draggingPinId = null;
@@ -439,6 +568,7 @@ async function openBoard() {
     docCache.set(boardId, doc);
     applyDoc(doc);
     loaded = true;
+    if (repo.watch) sendLive = repo.watch(boardId, liveHandlers);
   } catch (e) {
     if (token !== loadToken) return;
     console.error(e);
@@ -454,6 +584,9 @@ function applyCamera() {
   const tx = -cam.x * cam.zoom;
   const ty = -cam.y * cam.zoom;
   world.style.transform = `translate(${tx}px, ${ty}px) scale(${cam.zoom})`;
+  updateCursors();
+  linksSvg.style.transform = world.style.transform;
+  barDirty = true;
   let g = 24 * cam.zoom;
   while (g < 10) g *= 4;
   stage.style.backgroundSize = `${g}px ${g}px`;
@@ -498,6 +631,14 @@ function frame() {
   if (dirty) {
     dirty = false;
     render();
+  }
+  if (linksDirty) {
+    linksDirty = false;
+    renderLinks();
+  }
+  if (barDirty) {
+    barDirty = false;
+    positionPinbar();
   }
   requestAnimationFrame(frame);
 }
@@ -637,6 +778,11 @@ function undo() {
   } else if (a.type === "pin") {
     if (!pins.has(a.id)) return;
     removePinLocal(a.id);
+    removeLinksOf(a.id);
+  } else if (a.type === "link") {
+    if (!links.delete(a.id)) return;
+    if (selected?.id === a.id) select(null);
+    linksDirty = true;
   }
   dirty = true;
   markChanged();
@@ -649,6 +795,10 @@ function pinData(p) {
     d.child = p.child;
     d.color = p.color;
   }
+  if (p.type === "note" && p.color) d.color = p.color;
+  if (p.fontSize) d.fontSize = p.fontSize;
+  if (p.bold) d.bold = true;
+  if (p.textColor) d.textColor = p.textColor;
   return d;
 }
 
@@ -720,6 +870,14 @@ function renderPin(p) {
     if (img.getAttribute("src") !== src) img.src = src;
   }
   if (p.type === "folder") el.style.setProperty("--folder", safeColor(p.color));
+  if (p.type === "note") el.style.background = p.color ? safeHex(p.color, NOTE_COLORS[0]) : "";
+  field.style.fontSize = p.fontSize ? clamp(+p.fontSize, 6, 200) + "px" : "";
+  field.style.fontWeight = p.bold ? "800" : "";
+  field.style.color = p.textColor ? safeHex(p.textColor, "") : "";
+  if (p.type === "image") field.style.height = p.fontSize ? Math.max(CAPTION, p.fontSize * 1.4 + 12) + "px" : "";
+  el.classList.toggle("selected", selected?.kind === "pin" && selected.id === p.id);
+  linksDirty = true;
+  if (selected?.id === p.id) barDirty = true;
 }
 
 function createPinLocal(p) {
@@ -729,24 +887,39 @@ function createPinLocal(p) {
   pushUndo({ type: "pin", id: p.id });
   markChanged();
   setTool("select");
+  select({ kind: "pin", id: p.id });
 }
 
 function removePinLocal(id) {
   pins.delete(id);
   pinEls.get(id)?.remove();
   pinEls.delete(id);
+  if (selected?.id === id) select(null);
+  if (pendingConnect === id) pendingConnect = null;
+  linksDirty = true;
+}
+
+function removeLinksOf(id) {
+  for (const l of [...links.values()]) {
+    if (l.from === id || l.to === id) {
+      links.delete(l.id);
+      if (selected?.id === l.id) select(null);
+    }
+  }
+  linksDirty = true;
 }
 
 function deletePin(p) {
   if (p.type === "folder" && !confirm(`Delete folder "${p.text || "Untitled folder"}"? Its contents will no longer be reachable from the board.`)) return;
   removePinLocal(p.id);
+  removeLinksOf(p.id);
   markChanged();
 }
 
 function applyRemotePin(p) {
   if (!p || !p.id || draggingPinId === p.id) return;
   const cur = pins.get(p.id);
-  const merged = { ...cur, ...p };
+  const merged = { ...p };
   merged.type ||= merged.image_url ? "image" : "note";
   const el = pinEls.get(p.id);
   if (cur && el && document.activeElement === el.querySelector(".pin-text")) merged.text = cur.text;
@@ -767,6 +940,7 @@ async function moveIntoFolder(pin, folder) {
   const data = pinData(pin);
   const path = boardPath(folder.child);
   removePinLocal(pin.id);
+  removeLinksOf(pin.id);
   markChanged();
   try {
     for (let attempt = 0; ; attempt++) {
@@ -796,13 +970,30 @@ function onPinPointerDown(e, id) {
   const el = pinEls.get(id);
   const pin = pins.get(id);
   if (!el || !pin || spaceDown || e.button !== 0) return;
+  if (tool === "connect" && canEdit()) {
+    e.stopPropagation();
+    e.preventDefault();
+    startConnectDrag(e, id);
+    return;
+  }
+  if (pendingConnect && canEdit()) {
+    e.stopPropagation();
+    e.preventDefault();
+    const from = pendingConnect;
+    pendingConnect = null;
+    document.body.classList.remove("connecting");
+    if (from !== id) createLink(from, id);
+    return;
+  }
   if (e.target.closest(".pin-text, .pin-del, .folder-open")) {
     e.stopPropagation();
+    if (canEdit() && !e.target.closest(".pin-del")) select({ kind: "pin", id });
     return;
   }
   if (tool !== "select" || !canEdit()) return;
   e.stopPropagation();
   e.preventDefault();
+  select({ kind: "pin", id });
   el.style.zIndex = ++zTop;
   if (document.activeElement?.classList?.contains("pin-text")) document.activeElement.blur();
   const mode = e.target.closest(".pin-resize") ? "resize" : "move";
@@ -835,6 +1026,7 @@ function onPinPointerDown(e, id) {
     }
     moved = true;
     renderPin(pin);
+    sendPinLive(pin);
   };
   const up = () => {
     el.removeEventListener("pointermove", move);
@@ -952,7 +1144,8 @@ function readOnlyHint() {
 function setTool(t) {
   if (!repo.canWrite) t = "select";
   tool = t;
-  document.body.classList.remove("tool-select", "tool-pen", "tool-eraser");
+  document.body.classList.remove("tool-select", "tool-pen", "tool-eraser", "tool-connect");
+  if (t !== "select") select(null);
   document.body.classList.add("tool-" + t);
   for (const b of document.querySelectorAll("[data-tool]")) b.classList.toggle("active", b.dataset.tool === t);
 }
@@ -978,7 +1171,14 @@ stage.addEventListener("pointerdown", e => {
   }
   if (pointers.size > 2) return;
   if (document.activeElement?.classList?.contains("pin-text")) document.activeElement.blur();
-  if (e.button === 1 || spaceDown || (tool === "select" && e.button === 0) || !canEdit()) {
+  if (e.button === 0) {
+    select(null);
+    if (pendingConnect) {
+      pendingConnect = null;
+      document.body.classList.remove("connecting");
+    }
+  }
+  if (e.button === 1 || spaceDown || tool === "connect" || (tool === "select" && e.button === 0) || !canEdit()) {
     gesture = { type: "pan", sx: e.clientX, sy: e.clientY, cx: cam.x, cy: cam.y };
     stage.classList.add("panning");
     return;
@@ -1062,6 +1262,13 @@ stage.addEventListener("wheel", e => {
 
 addEventListener("pointermove", e => {
   lastPointer = { x: e.clientX, y: e.clientY };
+  if (repo.mode === "live" && !cursorTimer) {
+    cursorTimer = setTimeout(() => {
+      cursorTimer = 0;
+      const w = toWorld(lastPointer.x, lastPointer.y);
+      sendLive("cursor", { uid, name: me.name, color: me.color, x: r(w.x), y: r(w.y) });
+    }, LIVE_SEND_INTERVAL);
+  }
 });
 
 addEventListener("keydown", e => {
@@ -1069,6 +1276,11 @@ addEventListener("keydown", e => {
   if ((e.ctrlKey || e.metaKey) && e.code === "KeyS") {
     e.preventDefault();
     save();
+    return;
+  }
+  if ((e.ctrlKey || e.metaKey) && e.code === "KeyB" && selected?.kind === "pin" && canEdit()) {
+    e.preventDefault();
+    toggleBold();
     return;
   }
   if (isTyping(e.target)) {
@@ -1089,11 +1301,24 @@ addEventListener("keydown", e => {
     return;
   }
   if (e.ctrlKey || e.metaKey || e.altKey) return;
-  if (e.key === "Escape" || (e.key === "Backspace" && route.length > 1)) {
+  if ((e.key === "Delete" || e.key === "Backspace") && selected && canEdit()) {
+    e.preventDefault();
+    deleteSelected();
+    return;
+  }
+  if (e.key === "Escape") {
+    if (pendingConnect || selected) {
+      pendingConnect = null;
+      document.body.classList.remove("connecting");
+      select(null);
+    } else goUp();
+    return;
+  }
+  if (e.key === "Backspace" && route.length > 1) {
     goUp();
     return;
   }
-  const tools = { KeyV: "select", KeyH: "select", KeyP: "pen", KeyB: "pen", KeyE: "eraser" };
+  const tools = { KeyV: "select", KeyH: "select", KeyP: "pen", KeyB: "pen", KeyE: "eraser", KeyC: "connect" };
   const at = toWorld(lastPointer.x, lastPointer.y);
   if (tools[e.code]) setTool(tools[e.code]);
   else if (e.code === "KeyN") addNote("", at);
@@ -1217,6 +1442,246 @@ settingsDlg.addEventListener("close", async () => {
   location.reload();
 });
 
+function anchor(p) {
+  return { x: p.x + p.w / 2, y: p.y + Math.min(14, p.h / 4) };
+}
+
+function linkCurve(a, b) {
+  const sag = Math.min(120, Math.hypot(b.x - a.x, b.y - a.y) * 0.15);
+  const c = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 + sag };
+  return { c, mid: { x: (a.x + 2 * c.x + b.x) / 4, y: (a.y + 2 * c.y + b.y) / 4 }, d: `M${a.x} ${a.y} Q${c.x} ${c.y} ${b.x} ${b.y}` };
+}
+
+function renderLinks() {
+  let html = "";
+  for (const l of links.values()) {
+    const a = pins.get(l.from);
+    const b = pins.get(l.to);
+    if (!a || !b || !/^[\w-]+$/.test(l.id)) continue;
+    const A = anchor(a);
+    const B = anchor(b);
+    const color = safeHex(l.color, LINK_COLORS[0]);
+    const { d } = linkCurve(A, B);
+    const sel = selected?.kind === "link" && selected.id === l.id ? " selected" : "";
+    html += `<g class="link${sel}" data-id="${l.id}"><path class="link-hit" d="${d}"/><path class="link-line" d="${d}" stroke="${color}"/>` +
+      `<circle class="link-pin" cx="${A.x}" cy="${A.y}" r="5" fill="${color}"/><circle class="link-pin" cx="${B.x}" cy="${B.y}" r="5" fill="${color}"/></g>`;
+  }
+  if (connectDrag) {
+    const a = pins.get(connectDrag.from);
+    if (a) {
+      const A = anchor(a);
+      html += `<path class="link-temp" d="${linkCurve(A, connectDrag.to).d}" stroke="${linkColor}"/><circle class="link-pin" cx="${A.x}" cy="${A.y}" r="5" fill="${linkColor}"/>`;
+    }
+  }
+  linksSvg.innerHTML = html;
+}
+
+function createLink(from, to) {
+  if (from === to || !pins.has(from) || !pins.has(to)) return;
+  for (const l of links.values()) {
+    if ((l.from === from && l.to === to) || (l.from === to && l.to === from)) {
+      showToast("Already connected");
+      return;
+    }
+  }
+  const l = { id: newId(), from, to, color: linkColor };
+  links.set(l.id, l);
+  pushUndo({ type: "link", id: l.id });
+  linksDirty = true;
+  markChanged();
+}
+
+function pinAt(x, y, excludeId) {
+  for (const n of document.elementsFromPoint(x, y)) {
+    const el = n.closest?.(".pin");
+    if (el && el.dataset.id !== excludeId) return el.dataset.id;
+  }
+  return null;
+}
+
+function startConnectDrag(e, id) {
+  const el = pinEls.get(id);
+  connectDrag = { from: id, to: toWorld(e.clientX, e.clientY) };
+  let target = null;
+  el.setPointerCapture(e.pointerId);
+  const setTarget = t => {
+    if (t === target) return;
+    if (target) pinEls.get(target)?.classList.remove("connect-target");
+    target = t;
+    if (target) pinEls.get(target)?.classList.add("connect-target");
+  };
+  const move = ev => {
+    connectDrag.to = toWorld(ev.clientX, ev.clientY);
+    setTarget(pinAt(ev.clientX, ev.clientY, id));
+    linksDirty = true;
+  };
+  const up = () => {
+    el.removeEventListener("pointermove", move);
+    el.removeEventListener("pointerup", up);
+    el.removeEventListener("pointercancel", up);
+    const to = target;
+    setTarget(null);
+    connectDrag = null;
+    linksDirty = true;
+    if (to) createLink(id, to);
+  };
+  el.addEventListener("pointermove", move);
+  el.addEventListener("pointerup", up);
+  el.addEventListener("pointercancel", up);
+}
+
+linksSvg.addEventListener("pointerdown", e => {
+  const g = e.target.closest?.(".link");
+  if (!g || !canEdit() || tool !== "select" || spaceDown || e.button !== 0) return;
+  e.stopPropagation();
+  select({ kind: "link", id: g.dataset.id });
+});
+
+function getSelected() {
+  if (!selected) return null;
+  return selected.kind === "link" ? links.get(selected.id) : pins.get(selected.id);
+}
+
+function select(sel) {
+  const prev = selected;
+  selected = sel && (sel.kind === "link" ? links.has(sel.id) : pins.has(sel.id)) ? sel : null;
+  if (prev?.kind === "pin") pinEls.get(prev.id)?.classList.remove("selected");
+  if (selected?.kind === "pin") pinEls.get(selected.id)?.classList.add("selected");
+  linksDirty = true;
+  barDirty = true;
+  updatePinbar();
+}
+
+function selectionKind() {
+  const item = getSelected();
+  if (!item) return null;
+  return selected.kind === "link" ? "link" : item.type;
+}
+
+function updatePinbar() {
+  const kind = selectionKind();
+  pinbar.hidden = !kind || !canEdit();
+  if (pinbar.hidden) return;
+  const item = getSelected();
+  pinbar.dataset.kind = kind;
+  for (const el of pinbar.querySelectorAll("[data-k]")) el.hidden = !el.dataset.k.split(" ").includes(kind);
+  const palette = kind === "note" ? NOTE_COLORS : kind === "folder" ? FOLDER_COLORS : kind === "link" ? LINK_COLORS : [];
+  const currentColor = kind === "note" ? safeHex(item.color, NOTE_COLORS[0]) : kind === "folder" ? safeColor(item.color) : safeHex(item.color, LINK_COLORS[0]);
+  pbSwatches.innerHTML = "";
+  for (const c of palette) {
+    const b = document.createElement("button");
+    b.className = "swatch" + (c.toLowerCase() === currentColor.toLowerCase() ? " active" : "");
+    b.style.background = c;
+    b.title = c;
+    b.addEventListener("click", () => setSelectedColor(c));
+    pbSwatches.append(b);
+  }
+  pbCustom.value = currentColor;
+  pbTextColor.value = safeHex(item.textColor, "#222222");
+  $("#pbBold").classList.toggle("active", !!item.bold);
+  $("#pbSize").textContent = item.fontSize || DEFAULT_FONT[kind] || "";
+  positionPinbar();
+}
+
+function positionPinbar() {
+  if (pinbar.hidden) return;
+  const item = getSelected();
+  if (!item) {
+    select(null);
+    return;
+  }
+  let top;
+  let bottom;
+  if (selected.kind === "link") {
+    const a = pins.get(item.from);
+    const b = pins.get(item.to);
+    if (!a || !b) return;
+    const { mid } = linkCurve(anchor(a), anchor(b));
+    top = bottom = { x: (mid.x - cam.x) * cam.zoom, y: (mid.y - cam.y) * cam.zoom };
+  } else {
+    top = { x: (item.x + item.w / 2 - cam.x) * cam.zoom, y: (item.y - cam.y) * cam.zoom };
+    bottom = { x: top.x, y: (item.y + item.h - cam.y) * cam.zoom };
+  }
+  const w = pinbar.offsetWidth;
+  const h = pinbar.offsetHeight;
+  const x = clamp(top.x - w / 2, 8, Math.max(8, innerWidth - w - 8));
+  let y = top.y - h - 14;
+  if (y < 64) y = bottom.y + 14;
+  y = clamp(y, 64, Math.max(64, innerHeight - h - 80));
+  pinbar.style.transform = `translate(${x}px, ${y}px)`;
+}
+
+function setSelectedColor(c) {
+  const item = getSelected();
+  if (!item || !canEdit()) return;
+  item.color = c;
+  if (selected.kind === "link") {
+    linkColor = c;
+    ls.set("board-link-color", c);
+    linksDirty = true;
+  } else {
+    renderPin(item);
+  }
+  markChanged();
+  updatePinbar();
+}
+
+function changeFontSize(dir) {
+  const item = getSelected();
+  if (!item || selected.kind !== "pin") return;
+  const cur = item.fontSize || DEFAULT_FONT[item.type] || 15;
+  const next = dir > 0 ? FONT_SIZES.find(s => s > cur) : [...FONT_SIZES].reverse().find(s => s < cur);
+  if (!next) return;
+  item.fontSize = next === DEFAULT_FONT[item.type] ? undefined : next;
+  renderPin(item);
+  markChanged();
+  updatePinbar();
+}
+
+function toggleBold() {
+  const item = getSelected();
+  if (!item || selected.kind !== "pin") return;
+  item.bold = !item.bold;
+  renderPin(item);
+  markChanged();
+  updatePinbar();
+}
+
+function deleteSelected() {
+  const item = getSelected();
+  if (!item) return;
+  if (selected.kind === "link") {
+    links.delete(item.id);
+    select(null);
+    linksDirty = true;
+    markChanged();
+  } else {
+    deletePin(item);
+  }
+}
+
+pinbar.addEventListener("pointerdown", e => {
+  if (e.target.tagName !== "INPUT") e.preventDefault();
+});
+pbCustom.addEventListener("input", () => setSelectedColor(pbCustom.value));
+pbTextColor.addEventListener("input", () => {
+  const item = getSelected();
+  if (!item || selected.kind !== "pin") return;
+  item.textColor = pbTextColor.value;
+  renderPin(item);
+  markChanged();
+});
+$("#pbSmaller").addEventListener("click", () => changeFontSize(-1));
+$("#pbBigger").addEventListener("click", () => changeFontSize(1));
+$("#pbBold").addEventListener("click", toggleBold);
+$("#pbDelete").addEventListener("click", deleteSelected);
+$("#pbConnect").addEventListener("click", () => {
+  if (selected?.kind !== "pin") return;
+  pendingConnect = selected.id;
+  document.body.classList.add("connecting");
+  showToast("Click another pin to connect", 3000);
+});
+
 function showToast(text, ms = 2000) {
   toastEl.textContent = text;
   toastEl.classList.add("show");
@@ -1231,6 +1696,17 @@ function updateStatus() {
   else if (repo.mode === "local") {
     cls += " local";
     text = "Local only";
+  } else if (repo.mode === "live") {
+    if (lastError) {
+      cls += " error";
+      text = "Save failed";
+    } else if (liveState !== "SUBSCRIBED") {
+      cls += " busy";
+      text = "Connecting…";
+    } else {
+      cls += saving || hasUnsaved() ? " busy" : " on";
+      text = usersOnline > 1 ? `Live · ${usersOnline} online` : "Live";
+    }
   } else if (!repo.canWrite) text = "Read-only";
   else if (lastError) {
     cls += " error";
@@ -1249,16 +1725,105 @@ function updateStatus() {
   statusText.textContent = text;
   statusText.title = lastError || (repo.mode === "github"
     ? `Stored in ${repo.label}, branch ${config.branch}`
-    : "Saved in this browser only. Open settings to connect a GitHub repository.");
+    : repo.mode === "live"
+      ? "Real-time sync via Supabase"
+      : "Saved in this browser only. Open settings to connect a GitHub repository.");
+}
+
+const liveHandlers = {
+  cursor: m => {
+    if (!m || m.uid === uid || typeof m.x !== "number") return;
+    remoteCursors.set(m.uid, { ...m, t: Date.now() });
+    updateCursors();
+  },
+  pin: m => {
+    const p = pins.get(m?.id);
+    if (!p || draggingPinId === m.id) return;
+    for (const k of ["x", "y", "w", "h"]) if (typeof m[k] === "number") p[k] = m[k];
+    renderPin(p);
+  },
+  presence: n => {
+    usersOnline = Math.max(1, n);
+    updateStatus();
+  },
+  leave: key => removeCursor(key),
+  status: st => {
+    liveState = st;
+    updateStatus();
+  },
+};
+
+function sendPinLive(p) {
+  if (repo.mode !== "live" || pinLiveTimers.has(p.id)) return;
+  pinLiveTimers.set(p.id, setTimeout(() => {
+    pinLiveTimers.delete(p.id);
+    sendLive("pin", { id: p.id, x: p.x, y: p.y, w: p.w, h: p.h });
+  }, LIVE_SEND_INTERVAL));
+}
+
+function updateCursors() {
+  const now = Date.now();
+  for (const [id, c] of remoteCursors) {
+    if (now - c.t > 10000) {
+      removeCursor(id);
+      continue;
+    }
+    let el = cursorEls.get(id);
+    if (!el) {
+      el = document.createElement("div");
+      el.className = "cursor";
+      el.innerHTML = '<svg width="18" height="18" viewBox="0 0 18 18"><path d="M2 2 L16 8 L9.5 10 L7 16 Z" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg><span></span>';
+      cursorsEl.appendChild(el);
+      cursorEls.set(id, el);
+    }
+    const color = safeHex(c.color, "#555555");
+    el.querySelector("path").setAttribute("fill", color);
+    const label = el.querySelector("span");
+    label.textContent = String(c.name || "Guest").slice(0, 24);
+    label.style.background = color;
+    el.style.transform = `translate(${(c.x - cam.x) * cam.zoom}px, ${(c.y - cam.y) * cam.zoom}px)`;
+  }
+}
+
+function removeCursor(id) {
+  remoteCursors.delete(id);
+  cursorEls.get(id)?.remove();
+  cursorEls.delete(id);
+}
+
+setInterval(updateCursors, 2000);
+
+nameInput.addEventListener("input", () => {
+  me.name = nameInput.value.trim().slice(0, 24) || "Guest " + uid.slice(0, 4);
+  ls.set("board-name", me.name);
+});
+
+async function createStore() {
+  if (SUPABASE_URL && SUPABASE_KEY) {
+    try {
+      const { createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");
+      return createSupabaseStore(createClient);
+    } catch (e) {
+      console.error(e);
+      showToast("Could not connect to Supabase, using local mode", 5000);
+      return createLocalStore();
+    }
+  }
+  return config.owner && config.repo ? createGitHubStore(config) : createLocalStore();
 }
 
 async function init() {
-  document.body.classList.toggle("readonly", !repo.canWrite);
   resize();
-  setTool("select");
   requestAnimationFrame(frame);
+  repo = await createStore();
+  document.body.classList.toggle("readonly", !repo.canWrite);
+  document.body.classList.toggle("live", repo.mode === "live");
+  nameInput.value = me.name;
+  setTool("select");
   repo.onChange(path => {
-    if (path === boardPath(boardId) && loaded) pull().catch(console.error);
+    if (path !== boardPath(boardId) || !loaded) return;
+    if (saving) pullAfterSave = true;
+    else pull().catch(console.error);
   });
   try {
     await repo.init();
