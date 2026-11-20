@@ -5,8 +5,8 @@
     "1d407b0b-7e3f-486a-a014-ddd22524a06c": {"id":"1d407b0b-7e3f-486a-a014-ddd22524a06c","type":"note","x":-216,"y":-146.5,"w":220,"h":160,"text":"#1\nHuman too springy","fontSize":18,"bold":true},
     "e43c293f-a982-4f7d-be38-0f45c5eafa4f": {"id":"e43c293f-a982-4f7d-be38-0f45c5eafa4f","type":"note","x":42,"y":-156.5,"w":220,"h":160,"text":"#2\nAdd infinity magazine","fontSize":18,"bold":true},
     "79c7a23c-5220-4076-82b5-e932552c08be": {"id":"79c7a23c-5220-4076-82b5-e932552c08be","type":"note","x":296,"y":-181.5,"w":220,"h":160,"text":"#3\nMake reverse motor","fontSize":18,"bold":true},
-    "b0443da5-8aaa-493f-9ce4-1f66599a3c6d": {"id":"b0443da5-8aaa-493f-9ce4-1f66599a3c6d","type":"note","x":581.8,"y":-163.5,"w":220,"h":160,"text":"#4\nThe detached limb ignores the rest of the person until it leaves the person’s collider.","fontSize":18,"bold":true},
-    "5d15a7ea-543a-4714-ac28-a1420732cc7c": {"id":"5d15a7ea-543a-4714-ac28-a1420732cc7c","type":"note","x":760.9,"y":-212.6,"w":255.6,"h":185.9,"text":"#5\nFix Flip with comnnection and make Full flip instead of selecteble"}
+    "b0443da5-8aaa-493f-9ce4-1f66599a3c6d": {"id":"b0443da5-8aaa-493f-9ce4-1f66599a3c6d","type":"note","x":537.6,"y":-168.1,"w":220,"h":160,"text":"#4\nThe detached limb ignores the rest of the person until it leaves the person’s collider.","fontSize":18,"bold":true},
+    "5d15a7ea-543a-4714-ac28-a1420732cc7c": {"id":"5d15a7ea-543a-4714-ac28-a1420732cc7c","type":"note","x":760.9,"y":-212.6,"w":255.6,"h":185.9,"text":"#5\nFixmake Full flip instead of selecteble Flip with comnnection and "}
   },
   "links": {},
   "strokes": {}
