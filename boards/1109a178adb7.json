@@ -2,7 +2,8 @@
   "version": 1,
   "id": "1109a178adb7",
   "items": {
-    "ea630aa1-f44e-4ca7-ae75-bec31c4c5fe7": {"id":"ea630aa1-f44e-4ca7-ae75-bec31c4c5fe7","type":"note","x":-218,"y":-120.5,"w":220,"h":160,"text":"Bug #1\nThe game may crash upon launch","color":"#fff3a3","fontSize":18}
+    "ea630aa1-f44e-4ca7-ae75-bec31c4c5fe7": {"id":"ea630aa1-f44e-4ca7-ae75-bec31c4c5fe7","type":"note","x":-218,"y":-120.5,"w":220,"h":160,"text":"Bug #1\nThe game may crash upon launch","color":"#fff3a3","fontSize":18,"bold":true},
+    "03b68f64-7809-4971-8ef1-b50a92f4f00d": {"id":"03b68f64-7809-4971-8ef1-b50a92f4f00d","type":"note","x":43.7,"y":-205.1,"w":255.6,"h":185.9,"text":""}
   },
   "links": {},
   "strokes": {}
