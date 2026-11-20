@@ -5,7 +5,8 @@
     "7bd429a2-e3c7-404e-a040-e382a25f2664": {"id":"7bd429a2-e3c7-404e-a040-e382a25f2664","type":"note","x":-256,"y":-157.5,"w":220,"h":160,"text":"#1\nMap Creator","fontSize":18,"bold":true},
     "bb100034-b326-4178-bc47-381426c1ab26": {"id":"bb100034-b326-4178-bc47-381426c1ab26","type":"note","x":19,"y":-177.5,"w":220,"h":160,"text":"#2\nMod system","fontSize":18,"bold":true},
     "010beeb9-3eec-4e08-9001-7a15cdaa3bb2": {"id":"010beeb9-3eec-4e08-9001-7a15cdaa3bb2","type":"note","x":302,"y":-169.5,"w":220,"h":160,"text":"#3\nMore items","fontSize":18,"bold":true},
-    "f35a475a-b211-49f5-b2b1-28fbf16d0204": {"id":"f35a475a-b211-49f5-b2b1-28fbf16d0204","type":"note","x":598,"y":-141.5,"w":220,"h":160,"text":"#4\nSound","fontSize":18,"bold":true}
+    "f35a475a-b211-49f5-b2b1-28fbf16d0204": {"id":"f35a475a-b211-49f5-b2b1-28fbf16d0204","type":"note","x":598,"y":-141.5,"w":220,"h":160,"text":"#4\nSound","fontSize":18,"bold":true},
+    "c3f139cf-691f-4b3b-bd18-0e9837ac5844": {"id":"c3f139cf-691f-4b3b-bd18-0e9837ac5844","type":"note","x":824.4,"y":-199.1,"w":255.6,"h":185.9,"text":"#5\n"}
   },
   "links": {},
   "strokes": {}
