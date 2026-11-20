@@ -3,7 +3,7 @@
   "id": "main",
   "items": {
     "b9aa4c42-6dc4-496a-90f2-36bdc5a97a42": {"id":"b9aa4c42-6dc4-496a-90f2-36bdc5a97a42","type":"folder","x":-112.2,"y":-130.1,"w":172.1,"h":129.1,"text":"Bugs","child":"1109a178adb7","color":"#82c91e"},
-    "4f0d9a6a-7b09-4730-b341-ad1f333d38f1": {"id":"4f0d9a6a-7b09-4730-b341-ad1f333d38f1","type":"folder","x":228.7,"y":-144.7,"w":172.1,"h":129.1,"text":"Fix","child":"0ba1a7c6d6d4","color":"#fd7e14"}
+    "4f0d9a6a-7b09-4730-b341-ad1f333d38f1": {"id":"4f0d9a6a-7b09-4730-b341-ad1f333d38f1","type":"folder","x":134.9,"y":-131.8,"w":172.1,"h":129.1,"text":"Fixs","child":"0ba1a7c6d6d4","color":"#fd7e14"}
   },
   "links": {},
   "strokes": {}
