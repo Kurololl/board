@@ -1,7 +1,9 @@
 {
   "version": 1,
   "id": "main",
-  "items": {},
+  "items": {
+    "b9aa4c42-6dc4-496a-90f2-36bdc5a97a42": {"id":"b9aa4c42-6dc4-496a-90f2-36bdc5a97a42","type":"folder","x":-112.2,"y":-130.1,"w":172.1,"h":129.1,"text":"Bugs","child":"1109a178adb7","color":"#82c91e"}
+  },
   "links": {},
   "strokes": {}
 }
