@@ -3,7 +3,7 @@
   "id": "main",
   "items": {
     "b9aa4c42-6dc4-496a-90f2-36bdc5a97a42": {"id":"b9aa4c42-6dc4-496a-90f2-36bdc5a97a42","type":"folder","x":-112.2,"y":-130.1,"w":172.1,"h":129.1,"text":"Bugs","child":"1109a178adb7","color":"#82c91e"},
-    "4f0d9a6a-7b09-4730-b341-ad1f333d38f1": {"id":"4f0d9a6a-7b09-4730-b341-ad1f333d38f1","type":"folder","x":144.4,"y":-131.8,"w":172.1,"h":129.1,"text":"Fixes","child":"0ba1a7c6d6d4","color":"#fa5252"},
+    "4f0d9a6a-7b09-4730-b341-ad1f333d38f1": {"id":"4f0d9a6a-7b09-4730-b341-ad1f333d38f1","type":"folder","x":144.4,"y":-131.8,"w":172.1,"h":129.1,"text":"Need to be Fixed","child":"0ba1a7c6d6d4","color":"#fa5252"},
     "d9ab2c38-0e9e-4474-978c-b0c330145e7e": {"id":"d9ab2c38-0e9e-4474-978c-b0c330145e7e","type":"folder","x":407.7,"y":-128.7,"w":172.1,"h":129.1,"text":"New Features","child":"a98203b85426","color":"#4c6ef5"}
   },
   "links": {},
