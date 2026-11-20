@@ -2,8 +2,7 @@
   "version": 1,
   "id": "168c1b06551f",
   "items": {
-    "1d407b0b-7e3f-486a-a014-ddd22524a06c": {"id":"1d407b0b-7e3f-486a-a014-ddd22524a06c","type":"note","x":-216,"y":-146.5,"w":220,"h":160,"text":"#1\nHuman too springy","fontSize":18,"bold":true},
-    "11743d1a-85c9-4428-b003-be396d3f59af": {"id":"11743d1a-85c9-4428-b003-be396d3f59af","type":"note","x":88,"y":-202.5,"w":220,"h":160,"text":""}
+    "1d407b0b-7e3f-486a-a014-ddd22524a06c": {"id":"1d407b0b-7e3f-486a-a014-ddd22524a06c","type":"note","x":-216,"y":-146.5,"w":220,"h":160,"text":"#1\nHuman too springy","fontSize":18,"bold":true}
   },
   "links": {},
   "strokes": {}
