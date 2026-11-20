@@ -4,8 +4,7 @@
   "items": {
     "7bd429a2-e3c7-404e-a040-e382a25f2664": {"id":"7bd429a2-e3c7-404e-a040-e382a25f2664","type":"note","x":-256,"y":-157.5,"w":220,"h":160,"text":"#1\nMap Creator","fontSize":18,"bold":true},
     "bb100034-b326-4178-bc47-381426c1ab26": {"id":"bb100034-b326-4178-bc47-381426c1ab26","type":"note","x":19,"y":-177.5,"w":220,"h":160,"text":"#2\nMod system","fontSize":18,"bold":true},
-    "010beeb9-3eec-4e08-9001-7a15cdaa3bb2": {"id":"010beeb9-3eec-4e08-9001-7a15cdaa3bb2","type":"note","x":311,"y":-229.5,"w":220,"h":160,"text":"#3\nMore items","fontSize":18,"bold":true},
-    "e04e8c0a-f1ba-4c5c-8c65-6511731dc548": {"id":"e04e8c0a-f1ba-4c5c-8c65-6511731dc548","type":"note","x":297,"y":24.5,"w":220,"h":160,"text":"#4\nLevels "}
+    "010beeb9-3eec-4e08-9001-7a15cdaa3bb2": {"id":"010beeb9-3eec-4e08-9001-7a15cdaa3bb2","type":"note","x":311,"y":-229.5,"w":220,"h":160,"text":"#3\nMore items","fontSize":18,"bold":true}
   },
   "links": {},
   "strokes": {}
