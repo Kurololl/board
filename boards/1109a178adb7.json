@@ -6,7 +6,7 @@
     "486b1ed3-2bd3-4045-b9be-540142816208": {"id":"486b1ed3-2bd3-4045-b9be-540142816208","type":"note","x":23.9,"y":-136.5,"w":238.2,"h":169.6,"text":"#2\nHuman Cant walk","fontSize":18,"bold":true},
     "7c7fb648-4113-4a87-a13c-de45c1bad83a": {"id":"7c7fb648-4113-4a87-a13c-de45c1bad83a","type":"note","x":295.8,"y":-144.6,"w":255.6,"h":185.9,"text":"#3\nBlood doesnt disappears after cleaning everything","fontSize":18,"bold":true},
     "5b7e062f-22b6-40ad-95c5-634b2b30efad": {"id":"5b7e062f-22b6-40ad-95c5-634b2b30efad","type":"note","x":578.1,"y":-143.5,"w":255.6,"h":185.9,"text":"#4\nkeys Improvement","fontSize":18,"bold":true},
-    "cf1ac7e3-9ddd-4d11-a2d4-fc610d3a6c38": {"id":"cf1ac7e3-9ddd-4d11-a2d4-fc610d3a6c38","type":"note","x":823.3,"y":-212,"w":255.6,"h":185.9,"text":"#5\nBug that "}
+    "cf1ac7e3-9ddd-4d11-a2d4-fc610d3a6c38": {"id":"cf1ac7e3-9ddd-4d11-a2d4-fc610d3a6c38","type":"note","x":823.3,"y":-212,"w":255.6,"h":185.9,"text":"#5\nFix Stability of human"}
   },
   "links": {},
   "strokes": {}
