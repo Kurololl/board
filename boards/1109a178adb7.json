@@ -4,7 +4,8 @@
   "items": {
     "ea630aa1-f44e-4ca7-ae75-bec31c4c5fe7": {"id":"ea630aa1-f44e-4ca7-ae75-bec31c4c5fe7","type":"note","x":-228.5,"y":-125.1,"w":238.6,"h":172.8,"text":"#1\nThe game may crash upon launch","color":"#fff3a3","fontSize":18,"bold":true},
     "486b1ed3-2bd3-4045-b9be-540142816208": {"id":"486b1ed3-2bd3-4045-b9be-540142816208","type":"note","x":23.9,"y":-136.5,"w":238.2,"h":169.6,"text":"#2\nHuman Cant walk","fontSize":18,"bold":true},
-    "7c7fb648-4113-4a87-a13c-de45c1bad83a": {"id":"7c7fb648-4113-4a87-a13c-de45c1bad83a","type":"note","x":295.8,"y":-144.6,"w":255.6,"h":185.9,"text":"#3\nBlood doesnt disappears after cleaning everything","fontSize":18,"bold":true}
+    "7c7fb648-4113-4a87-a13c-de45c1bad83a": {"id":"7c7fb648-4113-4a87-a13c-de45c1bad83a","type":"note","x":295.8,"y":-144.6,"w":255.6,"h":185.9,"text":"#3\nBlood doesnt disappears after cleaning everything","fontSize":18,"bold":true},
+    "5b7e062f-22b6-40ad-95c5-634b2b30efad": {"id":"5b7e062f-22b6-40ad-95c5-634b2b30efad","type":"note","x":630.4,"y":-141.2,"w":255.6,"h":185.9,"text":"#4\nkeys Improvement"}
   },
   "links": {},
   "strokes": {}
